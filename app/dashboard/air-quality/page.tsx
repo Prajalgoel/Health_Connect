@@ -433,20 +433,48 @@ export default function AirQuality() {
   // Fetch real-time AQI data from WAQI API
   const fetchRealAQIData = async (cityName: string): Promise<AQIData | null> => {
     try {
+      console.log(`Fetching AQI data for: ${cityName}`)
+      console.log(`Using API key: ${WAQI_API_KEY === 'demo' ? 'demo (not configured)' : 'configured'}`)
+      
       // Clean the city name - WAQI API prefers simple city names without country
       const cleanCityName = cityName.toLowerCase().trim()
       
-      const response = await fetch(`${WAQI_BASE_URL}/feed/${encodeURIComponent(cleanCityName)}/?token=${WAQI_API_KEY}`)
+      const apiUrl = `${WAQI_BASE_URL}/feed/${encodeURIComponent(cleanCityName)}/?token=${WAQI_API_KEY}`
+      console.log(`API URL: ${apiUrl.replace(WAQI_API_KEY, 'HIDDEN_TOKEN')}`)
+      
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      })
+
+      if (!response.ok) {
+        console.error(`HTTP Error: ${response.status} ${response.statusText}`)
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+
       const data = await response.json()
+      console.log('API Response:', data)
 
       if (data.status !== "ok") {
         console.error("WAQI API Error:", data)
-        throw new Error(data.data || "Failed to fetch AQI data")
+        throw new Error(data.data || "API returned non-ok status")
       }
 
       const aqiData = data.data
       const aqi = aqiData.aqi
+      
+      // Check if AQI is valid
+      if (!aqi || aqi === '-' || typeof aqi !== 'number') {
+        console.error('Invalid AQI value:', aqi)
+        throw new Error('Invalid AQI value received from API')
+      }
+
       const iaqi = aqiData.iaqi || {}
+      
+      console.log('Successfully fetched AQI:', aqi)
+      console.log('Pollutant data:', iaqi)
       
       // Update location display with actual station name if available
       if (aqiData.city && aqiData.city.name) {
@@ -467,7 +495,8 @@ export default function AirQuality() {
       }
     } catch (error) {
       console.error("Error fetching WAQI data:", error)
-      setError(`Unable to fetch data for "${cityName}". Try using just the city name (e.g., "delhi", "mumbai", "bangalore"). Using demo data.`)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      setError(`Unable to fetch data for "${cityName}": ${errorMessage}. Using demo data.`)
       return null
     }
   }
@@ -519,17 +548,25 @@ export default function AirQuality() {
     setError(null)
 
     try {
+      console.log('=== Loading AQI Data ===')
+      console.log('Use Real API:', useRealAPI)
+      console.log('Location:', location)
+      console.log('API Key configured:', WAQI_API_KEY !== "demo")
+
       if (useRealAPI && WAQI_API_KEY !== "demo") {
+        console.log('Attempting to fetch real data...')
         // Fetch real data
         const currentData = await fetchRealAQIData(location)
 
         if (currentData) {
+          console.log('Real data fetched successfully!')
           setCurrentAQI(currentData)
           const historical = await fetchHistoricalData(currentData)
           setHistoricalData(historical)
           setPredictions(predictAQI(historical))
           setTimeSlots(generateTimeSlots(currentData.aqi))
         } else {
+          console.log('Real data fetch failed, falling back to demo data')
           // Fallback to demo data
           setHistoricalData(mockAQIData)
           setCurrentAQI(mockAQIData[mockAQIData.length - 1])
@@ -537,6 +574,7 @@ export default function AirQuality() {
           setTimeSlots(generateTimeSlots(mockAQIData[mockAQIData.length - 1].aqi))
         }
       } else {
+        console.log('Using demo data (API key not configured or useRealAPI is false)')
         // Use demo data
         setHistoricalData(mockAQIData)
         setCurrentAQI(mockAQIData[mockAQIData.length - 1])
@@ -558,21 +596,26 @@ export default function AirQuality() {
       setTimeSlots(generateTimeSlots(mockAQIData[mockAQIData.length - 1].aqi))
     } finally {
       setIsLoading(false)
+      console.log('=== AQI Data Loading Complete ===')
     }
   }
 
   useEffect(() => {
     loadAQIData()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location, useRealAPI])
 
   // Auto-refresh every 30 minutes
   useEffect(() => {
-    const interval = setInterval(() => {
-      loadAQIData()
-    }, 30 * 60 * 1000) // 30 minutes
+    if (!isLoading) {
+      const interval = setInterval(() => {
+        loadAQIData()
+      }, 30 * 60 * 1000) // 30 minutes
 
-    return () => clearInterval(interval)
-  }, [location, useRealAPI])
+      return () => clearInterval(interval)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location, useRealAPI, isLoading])
 
   const getRecommendationColor = (rec: string) => {
     switch (rec) {
