@@ -14,8 +14,9 @@ export default function Dashboard() {
   const [aqiCategory, setAqiCategory] = useState("Unhealthy - Stay indoors")
   const [isLoadingAQI, setIsLoadingAQI] = useState(true)
 
+  // WAQI API configuration - fetch from environment variables
   const WAQI_API_KEY = process.env.NEXT_PUBLIC_WAQI_API_KEY || "demo"
-  const WAQI_BASE_URL = "https://api.waqi.info"
+  const WAQI_BASE_URL = process.env.NEXT_PUBLIC_WAQI_BASE_URL || "https://api.waqi.info"
 
   const getAQICategory = (aqi: number): string => {
     if (aqi <= 50) return "Good - Enjoy outdoor activities"

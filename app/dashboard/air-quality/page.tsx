@@ -72,9 +72,9 @@ export default function AirQuality() {
   const [error, setError] = useState<string | null>(null)
   const [useRealAPI, setUseRealAPI] = useState(true)
 
-  // WAQI API configuration
+  // WAQI API configuration - fetch from environment variables
   const WAQI_API_KEY = process.env.NEXT_PUBLIC_WAQI_API_KEY || "demo"
-  const WAQI_BASE_URL = "https://api.waqi.info"
+  const WAQI_BASE_URL = process.env.NEXT_PUBLIC_WAQI_BASE_URL || "https://api.waqi.info"
 
   // Popular cities for quick selection
   const popularCities = [
