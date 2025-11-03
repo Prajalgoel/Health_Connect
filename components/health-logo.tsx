@@ -1,9 +1,16 @@
 "use client"
 
 import { Stethoscope, Heart, Activity } from "lucide-react"
+import Link from "next/link"
 
 export function HealthLogo() {
   return (
+
+    <Link
+    href="/"
+    >
+    
+    
     <div className="fixed bottom-4 right-4 z-40 group cursor-pointer">
       <div className="relative">
         {/* Main logo container */}
@@ -30,5 +37,7 @@ export function HealthLogo() {
         </div>
       </div>
     </div>
+
+    </Link>
   )
 }
