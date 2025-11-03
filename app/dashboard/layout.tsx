@@ -221,8 +221,8 @@ export default function DashboardLayout({
                   <AvatarFallback className="bg-gray-700 text-white">JD</AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="text-sm font-medium text-white">John Doe</p>
-                  <p className="text-xs text-gray-400">john.doe@example.com</p>
+                  <p className="text-sm font-medium text-white">Srishti Mishra</p>
+                  <p className="text-xs text-gray-400">43srishtimishra@gmail.com</p>
                 </div>
               </div>
               {userRespiratoryConditions.length > 0 && (
